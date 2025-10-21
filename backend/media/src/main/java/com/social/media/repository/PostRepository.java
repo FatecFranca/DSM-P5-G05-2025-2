@@ -1,0 +1,29 @@
+package com.social.media.repository;
+
+import com.social.media.domain.posts.Post;
+import com.social.media.domain.posts.dto.ResponsePostDto;
+import com.social.media.domain.posts.dto.ResponsePostProjection;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.PagingAndSortingRepository;
+import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
+
+@Repository
+public interface PostRepository extends JpaRepository<Post, Long> {
+
+    @Query(value = """
+    SELECT 
+        p.*, COUNT(l) as likes
+    FROM posts p
+    LEFT JOIN likes l
+    ON l.post_id = p.id
+    WHERE p.user_id <> :id
+    GROUP BY p.id;
+    """,
+    nativeQuery = true)
+    List<ResponsePostProjection> findAllPostsWithLikeCount(@Param("id") Long id);
+
+}
