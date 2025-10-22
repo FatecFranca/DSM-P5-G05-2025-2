@@ -28,6 +28,7 @@ class FirebaseAuthRepo implements AuthRepo {
         uid: userCredential.user!.uid,
         email: email,
         name: userDoc['name'],
+        birthDate: userDoc['birthDate'] ?? '',
       );
 
       // return user
@@ -44,6 +45,7 @@ class FirebaseAuthRepo implements AuthRepo {
     String name,
     String email,
     String password,
+    String birthDate,
   ) async {
     try {
       // attempt to sign up
@@ -55,6 +57,7 @@ class FirebaseAuthRepo implements AuthRepo {
         uid: userCredential.user!.uid,
         email: email,
         name: name,
+        birthDate: birthDate,
       );
 
       // save user data in firestone
@@ -100,9 +103,10 @@ class FirebaseAuthRepo implements AuthRepo {
 
     // user exists
     return AppUser(
-      uid: firebaseUser.uid, 
-      email: firebaseUser.email!, 
+      uid: firebaseUser.uid,
+      email: firebaseUser.email!,
       name: userDoc['name'],
+      birthDate: userDoc['birthDate'] ?? '',
     );
   }
 }
