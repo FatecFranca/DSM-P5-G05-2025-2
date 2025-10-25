@@ -1,8 +1,8 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:socialapp/features/auth/domain/entities/app_user.dart';
 import 'package:socialapp/features/auth/presentation/cubits/auth_cubit.dart';
+import 'package:socialapp/features/profile/presentation/components/auth_image.dart';
 import 'package:socialapp/features/post/presentation/components/post_tile.dart';
 import 'package:socialapp/features/post/presentation/cubits/post_states.dart';
 import 'package:socialapp/features/post/presentation/cubits/posts_cubit.dart';
@@ -138,14 +138,13 @@ class _ProfilePageState extends State<ProfilePage> {
                 const SizedBox(height: 25),
 
                 // profile pic
-                CachedNetworkImage(
-                  imageUrl: user.profileImageUrl,
+                AuthImage(
+                  userId: user.uid,
                   // loading..
-                  placeholder: (context, url) =>
-                      const CircularProgressIndicator(),
+                  placeholder: const CircularProgressIndicator(),
 
                   // error -> failed to load
-                  errorWidget: (context, url, error) => Icon(
+                  errorWidget: Icon(
                     Icons.person,
                     size: 72,
                     color: Theme.of(context).colorScheme.primary,

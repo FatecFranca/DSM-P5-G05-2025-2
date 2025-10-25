@@ -60,4 +60,13 @@ class ApiService {
       throw Exception('Request failed: ${response.body}');
     }
   }
+
+  String? extractUrlFromResponse(String responseBody) {
+    try {
+      final Map<String, dynamic> json = jsonDecode(responseBody);
+      return json['url'];
+    } catch (_) {
+      return null;
+    }
+  }
 }

@@ -55,7 +55,8 @@ class ProfileUser extends AppUser {
       email: json['email'],
       name: json['name'],
       bio: json['bio'] ?? '',
-      profileImageUrl: json['profileImageUrl'] ?? '',
+      // A profileImageUrl deve ser apenas o ID do usuário, já que vamos construir a URL completa no AuthImage
+      profileImageUrl: json['uid'],
       followers: List<String>.from(json['followers'] ?? []),
       following: List<String>.from(json['following'] ?? []),
     );

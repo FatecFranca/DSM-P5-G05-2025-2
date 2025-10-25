@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'dart:typed_data';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:socialapp/features/profile/presentation/components/auth_image.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -137,14 +137,13 @@ class _EditProfilePageState extends State<EditProfilePage> {
                   ? Image.memory(webImage!, fit: BoxFit.cover)
                   :
                     // no image selected -> display existing profile pic
-                    CachedNetworkImage(
-                      imageUrl: widget.user.profileImageUrl,
+                    AuthImage(
+                      userId: widget.user.uid,
                       // loading..
-                      placeholder: (context, url) =>
-                          const CircularProgressIndicator(),
+                      placeholder: const CircularProgressIndicator(),
 
                       // error -> failed to load
-                      errorWidget: (context, url, error) => Icon(
+                      errorWidget: Icon(
                         Icons.person,
                         size: 72,
                         color: Theme.of(context).colorScheme.primary,

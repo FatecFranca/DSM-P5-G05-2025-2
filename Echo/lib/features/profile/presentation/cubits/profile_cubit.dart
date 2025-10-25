@@ -67,7 +67,6 @@ class ProfileCubit extends Cubit<ProfileState> {
         }
         // for web
         else if (imageWebBytes != null) {
-          // upload
           imageDownloadUrl = await storageRepo.uploadProfileImageWeb(
             imageWebBytes,
             uid,
