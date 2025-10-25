@@ -7,6 +7,8 @@ import com.social.media.exception.BadRequestException;
 import com.social.media.repository.FollowRepository;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -51,5 +53,26 @@ public class FollowService {
                 "isFollowing", status.getIsFollowing() == 1,
                 "isFollower", status.getIsFollower() == 1
         );
+    }
+
+    public List<Follow> userFollowing(Long userId) {
+        return followRepository.findFollowing(userId);
+    }
+
+    public List<Follow> userFollowers(Long userId) {
+        return followRepository.findFollowers(userId);
+    }
+
+    public HashMap<String, List<Follow>> userFollows(Long userId) {
+        HashMap<String, List<Follow>> map = new HashMap<>();
+
+        List<Follow> followingList = followRepository.findFollowing(userId);
+
+        List<Follow> followersList = followRepository.findFollowers(userId);
+
+        map.put("following", followingList);
+        map.put("followers", followersList);
+
+        return map;
     }
 }

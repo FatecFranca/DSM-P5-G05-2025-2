@@ -10,6 +10,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.io.Serializable;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -30,6 +31,8 @@ public class User implements UserDetails, Serializable {
     private String password;
     @Column(unique = true, nullable = false)
     private String email;
+    @Column(nullable = false)
+    private LocalDate dateOfBirth;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Like> likes = new ArrayList<>();
@@ -44,10 +47,19 @@ public class User implements UserDetails, Serializable {
 
     public User() {}
 
-    public User(String username, String password, String email) {
+    public User(String username, String password, String email, LocalDate dateOfBirth) {
         this.username = username;
         this.password = password;
         this.email = email;
+        this.dateOfBirth = dateOfBirth;
+    }
+
+    public User(String id, String username, String password, String email, LocalDate dateOfBirth) {
+        this.id = Long.parseLong(id);
+        this.username = username;
+        this.password = password;
+        this.email = email;
+        this.dateOfBirth = dateOfBirth;
     }
 
     public Long getId() {
@@ -111,5 +123,11 @@ public class User implements UserDetails, Serializable {
         return email;
     }
 
+    public LocalDate getDateOfBirth() {
+        return dateOfBirth;
+    }
 
+    public void setDateOfBirth(LocalDate dateOfBirth) {
+        this.dateOfBirth = dateOfBirth;
+    }
 }

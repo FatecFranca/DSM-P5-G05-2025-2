@@ -18,7 +18,6 @@ class ProfileCubit extends Cubit<ProfileState> {
     try {
       emit(ProfileLoading());
       final user = await profileRepo.fetchUserProfile(uid);
-
       if (user != null) {
         emit(ProfileLoaded(user));
       } else {

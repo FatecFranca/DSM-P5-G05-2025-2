@@ -1,5 +1,7 @@
 package com.social.media.services;
 
+import com.social.media.domain.follow.Follow;
+import com.social.media.domain.follow.dto.ResponseFollowDto;
 import com.social.media.domain.user.User;
 import com.social.media.domain.user_profile.UserProfile;
 import com.social.media.domain.user_profile.dto.UserProfileDto;
@@ -11,7 +13,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 public class UserProfileService {
@@ -35,8 +39,8 @@ public class UserProfileService {
     public UserProfileFollowDto getUserProfile(String username, Long id){
         UserProfile userProfile = this.findUserProfileById(id);
         User user = userService.findByUsernameOrThrow(username);
-        Map<String, Boolean> followStatus = this.followService.followStatus(id, user.getId());
-            return this.createFollowDto(userProfile,followStatus);
+        Map<String, List<Follow>> followStatus = this.followService.userFollows(user.getId());
+            return this.createFollowDto(userProfile,followStatus.get("following"), followStatus.get("followers"));
     }
 
     public UserProfileDto updateUserProfile(Long id, UserProfileDto dto, String username){
@@ -63,8 +67,29 @@ public class UserProfileService {
         return new UserProfileDto(userProfile.getFullName(), userProfile.getBio());
     }
 
-    private UserProfileFollowDto createFollowDto(UserProfile userProfile, Map<String, Boolean> followStatus){
-        return new UserProfileFollowDto(userProfile.getFullName(), userProfile.getBio(), userProfile.getProfilePicture(), followStatus.get("isFollowing"), followStatus.get("isFollower"));
+    private UserProfileFollowDto createFollowDto(
+            UserProfile userProfile,
+            List<Follow> following,
+            List<Follow> followers
+    ) {
+        List<String> followingIds = following.stream()
+                .map(f -> f.getFollowing().getId().toString())
+                .collect(Collectors.toList());
+
+        List<String> followerIds = followers.stream()
+                .map(f -> f.getFollower().getId().toString())
+                .collect(Collectors.toList());
+
+        return new UserProfileFollowDto(
+                userProfile.getId().toString(),
+                userProfile.getUser().getEmail(),
+                userProfile.getFullName(),
+                userProfile.getBio(),
+                userProfile.getProfilePicture(),
+                followingIds,
+                followerIds
+        );
     }
+
 
 }

@@ -8,13 +8,13 @@ import jakarta.persistence.*;
 public class UserProfile {
 
     @Id
-    @Column(name = "user_id")
     private Long id;
 
     @OneToOne
     @MapsId
     @JoinColumn(name = "user_id")
     private User user;
+
 
     @Column(name = "full_name")
     private String fullName;

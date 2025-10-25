@@ -53,7 +53,7 @@ public class SecurityConfiguration {
 
         corsConfiguration.addAllowedMethod("*");
         corsConfiguration.addAllowedHeader("*");
-        corsConfiguration.setAllowedOrigins(List.of("http://localhost:5500"));
+        corsConfiguration.setAllowedOrigins(List.of("http://localhost:5500","http://localhost:8081/"));
         corsConfiguration.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource configSource = new UrlBasedCorsConfigurationSource();
