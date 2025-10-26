@@ -13,40 +13,33 @@ class PostCubit extends Cubit<PostState> {
   PostCubit({required this.postRepo, required this.storageRepo})
     : super(PostsInitial());
 
-  // create a new post
-  Future<void> createPost(
-    Post post, {
-    String? imagePath,
-    Uint8List? imageBytes,
-  }) async {
-    String? imageUrl;
-
+  Future<Post> createPost(Post post) async {
     try {
-      // handle image upload for mobile platforms (using the path)
-      if (imagePath != null) {
-        emit(PostUploading());
-        imageUrl = await storageRepo.uploadPostImageMobile(imagePath, post.id);
-      }
-      // handle image upload for web platforms (using file bytes)
-      else if (imageBytes != null) {
-        emit(PostUploading());
-        imageUrl = await storageRepo.uploadPostImageWeb(imageBytes, post.id);
-      }
-
-      // give image url to post
-      final newPost = post.copyWith(imageUrl: imageUrl);
-
-      // create post in the backend
-      postRepo.createPost(newPost);
-
-      // re-fetch all posts
-      fetchAllPosts();
+      emit(PostUploading());
+      final createdPost = await postRepo.createPost(post);
+      await fetchAllPosts();
+      return createdPost;
     } catch (e) {
       emit(PostsError("Error creating post: $e"));
+      rethrow;
     }
   }
 
-  // fetch all posts
+  Future<List<String>> uploadPostImages(
+    String postId,
+    List<Uint8List> images,
+  ) async {
+    try {
+      emit(PostUploading());
+      final imageIds = await postRepo.uploadPostImages(postId, images);
+      await fetchAllPosts();
+      return imageIds;
+    } catch (e) {
+      emit(PostsError("Error uploading images: $e"));
+      rethrow;
+    }
+  }
+
   Future<void> fetchAllPosts() async {
     try {
       emit(PostsLoading());
@@ -57,14 +50,12 @@ class PostCubit extends Cubit<PostState> {
     }
   }
 
-  // delete a post
   Future<void> deletePost(String postId) async {
     try {
       await postRepo.deletePost(postId);
     } catch (e) {}
   }
 
-  // toggle like on a post
   Future<void> toggleLikePost(String postId, String userId) async {
     try {
       await postRepo.toggleLikePost(postId, userId);
@@ -73,7 +64,6 @@ class PostCubit extends Cubit<PostState> {
     }
   }
 
-  // add a comment to a post
   Future<void> addComment(String postId, Comment comment) async {
     try {
       await postRepo.addComment(postId, comment);
@@ -84,7 +74,6 @@ class PostCubit extends Cubit<PostState> {
     }
   }
 
-  // delete comment from a post
   Future<void> deleteComment(String postId, String commentId) async {
     try {
       await postRepo.deleteComment(postId, commentId);

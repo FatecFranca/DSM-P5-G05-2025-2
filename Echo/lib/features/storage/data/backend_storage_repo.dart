@@ -10,22 +10,11 @@ class BackendStorageRepo implements StorageRepo {
   void setToken(String token) => _token = token;
   String? get token => _token;
 
-  /*
-  
-  PROFILE PICTURES - upload e download de imagens de perfil
-  
-  */
-
-  // upload via bytes (Web ou Mobile)
   @override
   Future<String?> uploadProfileImageWeb(
     Uint8List fileBytes,
     String userId,
   ) async {
-    print(
-      "BackendStorageRepo - uploadProfileImageWeb called for user: $userId",
-    );
-    print("BackendStorageRepo - token present: ${_token != null}");
     if (_token == null) return null;
 
     try {
@@ -54,7 +43,6 @@ class BackendStorageRepo implements StorageRepo {
     }
   }
 
-  // upload via path (Mobile)
   @override
   Future<String?> uploadProfileImageMobile(String path, String userId) async {
     if (_token == null) return null;
@@ -88,14 +76,6 @@ class BackendStorageRepo implements StorageRepo {
     Uint8List fileBytes,
     String fileName,
   ) async => null;
-
-  // Métodos auxiliares removidos pois a lógica foi movida diretamente para uploadProfileImageWeb e uploadProfileImageMobile
-
-  /*
-  
-  DOWNLOAD DA IMAGEM
-  
-  */
 
   Future<Uint8List?> downloadProfileImage(String userId) async {
     if (_token == null) return null;

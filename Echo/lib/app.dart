@@ -7,6 +7,7 @@ import 'package:socialapp/features/home/presentation/pages/home_page.dart';
 import 'package:socialapp/features/auth/presentation/cubits/auth_cubit.dart';
 import 'package:socialapp/features/auth/presentation/cubits/auth_states.dart';
 import 'package:socialapp/features/auth/presentation/pages/auth_page.dart';
+import 'package:socialapp/features/post/data/backend_post_repo.dart';
 import 'package:socialapp/features/post/data/firebase_post_repo.dart';
 import 'package:socialapp/features/post/presentation/cubits/posts_cubit.dart';
 import 'package:socialapp/features/profile/data/firebase_profile_repo.dart';
@@ -50,6 +51,7 @@ class MyApp extends StatelessWidget {
 
   // post repo
   final firebasePostRepo = FirebasePostRepo();
+  final BackendPostRepo backendPostRepo = BackendPostRepo();
 
   MyApp({super.key});
 
@@ -76,7 +78,7 @@ class MyApp extends StatelessWidget {
           // post cubit
           BlocProvider<PostCubit>(
             create: (context) => PostCubit(
-              postRepo: firebasePostRepo,
+              postRepo: backendPostRepo,
               storageRepo: backendStorageRepo,
             ),
           ),
@@ -104,20 +106,10 @@ class MyApp extends StatelessWidget {
               }
 
               if (state is Authenticated) {
-                print("App - Authentication state changed to Authenticated");
-                print(
-                  "App - Backend auth token present: ${backendAuthRepo.token != null}",
-                );
                 if (backendAuthRepo.token != null) {
-                  print(
-                    "App - Setting token in repos: ${backendAuthRepo.token}",
-                  );
                   backendProfileRepo.setToken(backendAuthRepo.token!);
                   backendStorageRepo.setToken(backendAuthRepo.token!);
-                } else {
-                  print(
-                    "App - Warning: No token available after authentication",
-                  );
+                  backendPostRepo.setToken(backendAuthRepo.token!);
                 }
               }
             },

@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:socialapp/features/post/domain/entities/comment.dart';
 import 'package:socialapp/features/post/domain/entities/post.dart';
@@ -11,9 +13,17 @@ class FirebasePostRepo implements PostRepo {
       .collection('posts');
 
   @override
-  Future<void> createPost(Post post) async {
+  Future<Post> createPost(Post post, {List<Uint8List>? imageFiles}) async {
     try {
+      // Para o Firebase, ignoramos os imageFiles pois usamos o Storage separadamente
       await postsCollection.doc(post.id).set(post.toJson());
+
+      final docSnapshot = await postsCollection.doc(post.id).get();
+      if (!docSnapshot.exists) {
+        throw Exception("Post não foi criado corretamente");
+      }
+
+      return Post.fromJson(docSnapshot.data() as Map<String, dynamic>);
     } catch (e) {
       throw Exception("Error creating post: $e");
     }
@@ -139,5 +149,14 @@ class FirebasePostRepo implements PostRepo {
     } catch (e) {
       throw Exception("Error deleting comment: $e");
     }
+  }
+
+  @override
+  Future<List<String>> uploadPostImages(String postId, List<Uint8List> images) {
+    // Firebase não suporta upload de imagens diretamente.
+    // Essa funcionalidade só está disponível no BackendPostRepo
+    throw UnimplementedError(
+      'Upload de imagens não é suportado no Firebase. Use o BackendPostRepo.',
+    );
   }
 }

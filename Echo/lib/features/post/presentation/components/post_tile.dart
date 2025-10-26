@@ -7,6 +7,7 @@ import 'package:socialapp/features/auth/presentation/cubits/auth_cubit.dart';
 import 'package:socialapp/features/post/domain/entities/comment.dart';
 import 'package:socialapp/features/post/domain/entities/post.dart';
 import 'package:socialapp/features/post/presentation/components/comment_tile.dart';
+import 'package:socialapp/features/post/presentation/components/post_image.dart';
 import 'package:socialapp/features/post/presentation/cubits/post_states.dart';
 import 'package:socialapp/features/post/presentation/cubits/posts_cubit.dart';
 import 'package:socialapp/features/profile/domain/entities/profile_user.dart';
@@ -34,13 +35,10 @@ class _PostTileState extends State<PostTile> {
 
   bool isOwnPost = false;
 
-  // current user
   AppUser? currentUser;
 
-  // post user
   ProfileUser? postUser;
 
-  // on startup,
   @override
   void initState() {
     super.initState();
@@ -64,16 +62,9 @@ class _PostTileState extends State<PostTile> {
     }
   }
 
-  /*
-  LIKES
-  */
-
-  // user tapped like button
   void toggleLikePost() {
-    // current like status
     final isLiked = widget.post.likes.contains(currentUser!.uid);
 
-    // optimistically like & update UI
     setState(() {
       if (isLiked) {
         widget.post.likes.remove(currentUser!.uid); // unlike
@@ -82,31 +73,21 @@ class _PostTileState extends State<PostTile> {
       }
     });
 
-    // update like
     postCubit.toggleLikePost(widget.post.id, currentUser!.uid).catchError((
       onError,
     ) {
-      // if there's an error, revert back to original values
       setState(() {
         if (isLiked) {
-          widget.post.likes.remove(currentUser!.uid); // revert unlike
+          widget.post.likes.remove(currentUser!.uid);
         } else {
-          widget.post.likes.add(currentUser!.uid); // revert like
+          widget.post.likes.add(currentUser!.uid);
         }
       });
     });
   }
 
-  /*
-  
-  COMMENTS
-
-  */
-
-  // comment text controller
   final commentTextController = TextEditingController();
 
-  // open comment box -> user wants to type a new comment
   void openNewCommentBox() {
     showDialog(
       context: context,
@@ -118,16 +99,19 @@ class _PostTileState extends State<PostTile> {
         ),
 
         actions: [
-          // cancel button
           TextButton(
-            onPressed: () => Navigator.of(context).pop,
+            onPressed: () {
+              commentTextController.clear();
+              Navigator.of(context).pop();
+            },
             child: const Text("Cancel"),
           ),
 
-          // save button
           TextButton(
             onPressed: () {
               addComment();
+              commentTextController.clear();
+              Navigator.of(context).pop();
             },
             child: const Text("Save"),
           ),
@@ -137,7 +121,6 @@ class _PostTileState extends State<PostTile> {
   }
 
   void addComment() {
-    // create a new comment
     final newComment = Comment(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       postId: widget.post.id,
@@ -147,7 +130,6 @@ class _PostTileState extends State<PostTile> {
       timeStamp: DateTime.now(),
     );
 
-    // add comment using cubit
     if (commentTextController.text.isNotEmpty) {
       postCubit.addComment(widget.post.id, newComment);
     }
@@ -159,20 +141,16 @@ class _PostTileState extends State<PostTile> {
     super.dispose();
   }
 
-  // show options for deletion
   void showOptions() {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text("Delete Post?"),
         actions: [
-          // cancel button
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
             child: const Text("Cancel"),
           ),
-
-          // delete button
           TextButton(
             onPressed: () {
               widget.onDeletePressed!();
@@ -192,18 +170,18 @@ class _PostTileState extends State<PostTile> {
       color: Theme.of(context).colorScheme.secondary,
       child: Column(
         children: [
-          // top section: profile pic / name / delete button
           GestureDetector(
             onTap: () => Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => ProfilePage(uid: widget.post.userId)),
+              MaterialPageRoute(
+                builder: (context) => ProfilePage(uid: widget.post.userId),
+              ),
             ),
             child: Padding(
               padding: const EdgeInsets.all(12.0),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.start,
                 children: [
-                  // profile pic
                   postUser?.profileImageUrl != null
                       ? CachedNetworkImage(
                           imageUrl: postUser!.profileImageUrl,
@@ -225,7 +203,6 @@ class _PostTileState extends State<PostTile> {
 
                   const SizedBox(width: 10),
 
-                  // name
                   Text(
                     widget.post.userName,
                     style: TextStyle(
@@ -236,7 +213,6 @@ class _PostTileState extends State<PostTile> {
 
                   const Spacer(),
 
-                  // delete button
                   if (isOwnPost)
                     GestureDetector(
                       onTap: showOptions,
@@ -250,17 +226,18 @@ class _PostTileState extends State<PostTile> {
             ),
           ),
 
-          // image
-          CachedNetworkImage(
-            imageUrl: widget.post.imageUrl,
-            height: 430,
-            width: double.infinity,
-            fit: BoxFit.cover,
-            placeholder: (context, url) => const SizedBox(height: 430),
-            errorWidget: (context, url, error) => const Icon(Icons.error),
-          ),
+          // images
+          if (widget.post.imageIds.isNotEmpty)
+            PostImage(
+              postId: widget.post.id,
+              imageId: widget.post.imageIds[0],
+              width: double.infinity,
+              height: 430,
+              fit: BoxFit.cover,
+              placeholder: const SizedBox(height: 430),
+              errorWidget: const Icon(Icons.error),
+            ),
 
-          // buttons -> like, comment, timestamp
           Padding(
             padding: const EdgeInsets.all(20.0),
             child: Row(
@@ -268,7 +245,6 @@ class _PostTileState extends State<PostTile> {
                 SizedBox(
                   child: Row(
                     children: [
-                      // like button
                       GestureDetector(
                         onTap: toggleLikePost,
                         child: Icon(
@@ -283,7 +259,6 @@ class _PostTileState extends State<PostTile> {
 
                       const SizedBox(width: 5),
 
-                      // like count
                       Text(
                         widget.post.likes.length.toString(),
                         style: TextStyle(
@@ -295,7 +270,6 @@ class _PostTileState extends State<PostTile> {
                   ),
                 ),
 
-                // comment button
                 GestureDetector(
                   onTap: openNewCommentBox,
                   child: Icon(
@@ -316,18 +290,21 @@ class _PostTileState extends State<PostTile> {
 
                 const Spacer(),
 
-                // timestamp
-                Text(widget.post.timestamp.toString()),
+                Text(
+                  "${widget.post.timestamp.day}/${widget.post.timestamp.month}/${widget.post.timestamp.year} ${widget.post.timestamp.hour.toString().padLeft(2, '0')}:${widget.post.timestamp.minute.toString().padLeft(2, '0')}",
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.primary,
+                    fontSize: 12,
+                  ),
+                ),
               ],
             ),
           ),
 
-          // CAPTION
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 20),
             child: Row(
               children: [
-                // username
                 Text(
                   widget.post.userName,
                   style: const TextStyle(fontWeight: FontWeight.bold),
@@ -335,48 +312,37 @@ class _PostTileState extends State<PostTile> {
 
                 const SizedBox(width: 10),
 
-                // text
                 Text(widget.post.text),
               ],
             ),
           ),
 
-          // COMMENT SECTION
           BlocBuilder<PostCubit, PostState>(
             builder: (context, state) {
-              // LOADED
               if (state is PostsLoaded) {
-                // final individual post
                 final post = state.posts.firstWhere(
                   (post) => (post.id == widget.post.id),
                 );
 
                 if (post.comments.isNotEmpty) {
-                  // how many comments to show
                   int showCommentCount = post.comments.length;
 
-                  // comment section
                   return ListView.builder(
                     itemCount: showCommentCount,
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
                     itemBuilder: (context, index) {
-                      // get individual comment
                       final comment = post.comments[index];
 
-                      // comment tile UI
                       return CommentTile(comment: comment);
                     },
                   );
                 }
               }
 
-              // LOADING...
               if (state is PostsLoading) {
                 return const Center(child: CircularProgressIndicator());
-              }
-              // ERROR
-              else if (state is PostsError) {
+              } else if (state is PostsError) {
                 return Center(child: CircularProgressIndicator());
               } else {
                 return const SizedBox();

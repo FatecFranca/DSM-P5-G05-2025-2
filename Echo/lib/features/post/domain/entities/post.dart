@@ -6,9 +6,9 @@ class Post {
   final String userId;
   final String userName;
   final String text;
-  final String imageUrl;
+  final List<String> imageIds;
   final DateTime timestamp;
-  final List<String> likes; //store
+  final List<String> likes;
   final List<Comment> comments;
 
   Post({
@@ -16,19 +16,19 @@ class Post {
     required this.userId,
     required this.userName,
     required this.text,
-    required this.imageUrl,
+    required this.imageIds,
     required this.timestamp,
     required this.likes,
     required this.comments,
   });
 
-  Post copyWith({String? imageUrl}) {
+  Post copyWith({List<String>? imageIds}) {
     return Post(
       id: id,
       userId: userId,
       userName: userName,
       text: text,
-      imageUrl: imageUrl ?? this.imageUrl,
+      imageIds: imageIds ?? this.imageIds,
       timestamp: timestamp,
       likes: likes,
       comments: comments,
@@ -42,7 +42,9 @@ class Post {
       'userId': userId,
       'name': userName,
       'text': text,
-      'imageUrl': imageUrl,
+      'imageUrl': imageIds.isNotEmpty
+          ? imageIds[0]
+          : null, // Usando primeira imagem como principal
       'timestamp': Timestamp.fromDate(timestamp),
       'likes': likes,
       'comments': comments.map((comment) => comment.toJson()).toList(),
@@ -51,21 +53,64 @@ class Post {
 
   // convert json -> post
   factory Post.fromJson(Map<String, dynamic> json) {
-    // prepare comments
-    final List<Comment> comments =
-        (json['comments'] as List<dynamic>?)
-            ?.map((commentJson) => Comment.fromJson(commentJson))
+    // prepare comments (handle null, list or other types)
+    List<Comment> comments = [];
+    final commentsRaw = json['comments'];
+    if (commentsRaw is List) {
+      try {
+        comments = commentsRaw
+            .map(
+              (commentJson) =>
+                  Comment.fromJson(commentJson as Map<String, dynamic>),
+            )
+            .toList();
+      } catch (_) {
+        comments = [];
+      }
+    } else {
+      comments = [];
+    }
+
+    // handle image url/id - could be null, string or number
+    final imageUrlRaw = json['imageUrl'];
+    final List<String> imageIds = [];
+    if (imageUrlRaw != null) {
+      imageIds.add(imageUrlRaw.toString());
+    }
+
+    // Safely convert IDs and fields to strings
+    final id = json['id']?.toString() ?? '';
+    final userId = json['userId']?.toString() ?? '';
+    final userName = json['name']?.toString() ?? '';
+    final text = json['text']?.toString() ?? '';
+
+    // Parse timestamp (could be Timestamp or ISO string)
+    DateTime timestamp;
+    final rawTimestamp = json['timestamp'];
+    if (rawTimestamp is Timestamp) {
+      timestamp = rawTimestamp.toDate();
+    } else if (rawTimestamp is String) {
+      timestamp = DateTime.tryParse(rawTimestamp) ?? DateTime.now();
+    } else {
+      timestamp = DateTime.now(); // Fallback
+    }
+
+    // Ensure likes is a List<String>
+    final likes =
+        (json['likes'] as List<dynamic>?)
+            ?.map((e) => e?.toString() ?? '')
+            .where((s) => s.isNotEmpty)
             .toList() ??
         [];
 
     return Post(
-      id: json['id'],
-      userId: json['userId'],
-      userName: json['name'],
-      text: json['text'],
-      imageUrl: json['imageUrl'],
-      timestamp: (json['timestamp'] as Timestamp).toDate(),
-      likes: List<String>.from(json['likes'] ?? []),
+      id: id,
+      userId: userId,
+      userName: userName,
+      text: text,
+      imageIds: imageIds,
+      timestamp: timestamp,
+      likes: likes,
       comments: comments,
     );
   }

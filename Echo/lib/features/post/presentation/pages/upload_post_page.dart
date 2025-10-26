@@ -19,158 +19,286 @@ class UploadPostPage extends StatefulWidget {
 }
 
 class _UploadPostPageState extends State<UploadPostPage> {
-  // mobile image pick
-  PlatformFile? imagePickedFile;
+  List<PlatformFile> imagePickedFiles = [];
 
-  // web image pick
-  Uint8List? webImage;
+  List<Uint8List> webImages = [];
 
-  // text controller -> caption
-  final textController = TextEditingController();
+  TextEditingController? _textController;
+  TextEditingController get textController {
+    _textController ??= TextEditingController();
+    return _textController!;
+  }
 
-  // current user
   AppUser? currentUser;
 
   @override
   void initState() {
     super.initState();
-
-    getCurrentUser();
+    _getCurrentUser();
   }
 
-  // get current user
-  void getCurrentUser() async {
+  void _getCurrentUser() {
+    if (!mounted) return;
     final authCubit = context.read<AuthCubit>();
     currentUser = authCubit.currentUser;
   }
 
-  // pick image
-  Future<void> pickImage() async {
+  Future<void> pickImages() async {
     final result = await FilePicker.platform.pickFiles(
       type: FileType.image,
+      allowMultiple: true,
       withData: kIsWeb,
     );
 
     if (result != null) {
       setState(() {
-        imagePickedFile = result.files.first;
+        imagePickedFiles.addAll(result.files);
 
         if (kIsWeb) {
-          webImage = imagePickedFile!.bytes;
+          webImages.addAll(
+            result.files.where((f) => f.bytes != null).map((f) => f.bytes!),
+          );
         }
       });
     }
   }
 
-  // create & upload post
-  void uploadPost() async {
-    // check if both image and caption are provided
-    if (imagePickedFile == null || textController.text.isEmpty) {
+  void removeImage(int index) {
+    setState(() {
+      imagePickedFiles.removeAt(index);
+      if (kIsWeb) {
+        webImages.removeAt(index);
+      }
+    });
+  }
+
+  Future<void> uploadPost() async {
+    if (!mounted) return;
+
+    if (imagePickedFiles.isEmpty || textController.text.isEmpty) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Both image and caption are required")),
+        const SnackBar(
+          content: Text("Both text and at least one image are required"),
+        ),
       );
       return;
     }
 
-    // create a new post object
     final newPost = Post(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      id: '0',
       userId: currentUser!.uid,
       userName: currentUser!.name,
       text: textController.text,
-      imageUrl: '',
+      imageIds: [],
       timestamp: DateTime.now(),
       likes: [],
       comments: [],
     );
 
-    // post cubit
-    final postCubit = context.read<PostCubit>();
+    try {
+      if (!mounted) return;
+      final postCubit = context.read<PostCubit>();
 
-    // web upload
-    if (kIsWeb) {
-      postCubit.createPost(newPost, imageBytes: imagePickedFile?.bytes);
+      final createdPost = await postCubit.createPost(newPost);
+
+      if (kIsWeb) {
+        if (webImages.isNotEmpty) {
+          await postCubit.uploadPostImages(createdPost.id, webImages);
+        }
+      } else {
+        if (imagePickedFiles.isNotEmpty) {
+          final imageBytes = await Future.wait(
+            imagePickedFiles.map((file) => File(file.path!).readAsBytes()),
+          );
+
+          await postCubit.uploadPostImages(createdPost.id, imageBytes);
+        }
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Error uploading post: $e")));
     }
-    // mobile upload
-    else {
-      postCubit.createPost(newPost, imagePath: imagePickedFile?.path);
+  }
+
+  void _disposeController() {
+    if (_textController != null) {
+      _textController!.dispose();
+      _textController = null;
     }
   }
 
   @override
   void dispose() {
-    textController.dispose();
+    _disposeController();
     super.dispose();
   }
 
   // BUILD UI
   @override
   Widget build(BuildContext context) {
-    // BLOC CONSUMER -> builder + listener
-    return BlocConsumer<PostCubit, PostState>(
-      builder: (context, state) {
-        // loading or uploading..
-        if (state is PostsLoading || state is PostUploading) {
-          return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
-          );
-        }
-
-        // build upload page
-        return buildUploadPage();
-      },
-
-      // go to previous page when upload is done & posts are loaded
-      listener: (context, state) {
-        if (state is PostsLoaded) {
-          Navigator.pop(context);
+    return PopScope(
+      canPop: true,
+      onPopInvoked: (bool didPop) {
+        if (didPop) {
+          _disposeController();
         }
       },
+      child: BlocConsumer<PostCubit, PostState>(
+        builder: (context, state) {
+          // loading or uploading..
+          if (state is PostsLoading || state is PostUploading) {
+            return const Scaffold(
+              body: Center(child: CircularProgressIndicator()),
+            );
+          }
+
+          // build upload page
+          return buildUploadPage();
+        },
+
+        // go to previous page when upload is done & posts are loaded
+        listener: (context, state) async {
+          if (state is PostsLoaded && mounted) {
+            _disposeController();
+            Navigator.of(context).pop();
+          }
+        },
+      ),
     );
   }
 
   Widget buildUploadPage() {
-    // SCAFFOLD
     return Scaffold(
-      // APP BAR
       appBar: AppBar(
         title: const Text("Create Post"),
         foregroundColor: Theme.of(context).colorScheme.primary,
         actions: [
-          // upload button
-          IconButton(
-          onPressed: uploadPost, 
-          icon: const Icon(Icons.upload),
-          ),
+          IconButton(onPressed: uploadPost, icon: const Icon(Icons.upload)),
         ],
       ),
-
-      // BODY
-      body: Center(
-        child: Column(
-          children: [
-            // image preview for web
-            if (kIsWeb && webImage != null) Image.memory(webImage!),
-
-            // image preview for mobile
-            if (!kIsWeb && imagePickedFile != null)
-              Image.file(File(imagePickedFile!.path!)),
-
-            // pick image button
-            MaterialButton(
-              onPressed: pickImage,
-              color: Colors.blue,
-              child: const Text("Pick Image"),
-            ),
-
-            // caption text box
-            MyTextField(
-              controller: textController,
-              hintText: "Caption",
-              obscureText: false,
-            ),
-          ],
-        ),
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          return CustomScrollView(
+            slivers: [
+              SliverPadding(
+                padding: const EdgeInsets.all(16),
+                sliver: SliverList(
+                  delegate: SliverChildListDelegate([
+                    MyTextField(
+                      controller: textController,
+                      hintText: "Write a caption...",
+                      obscureText: false,
+                      maxLines: 3,
+                    ),
+                    const SizedBox(height: 16),
+                  ]),
+                ),
+              ),
+              if (imagePickedFiles.isNotEmpty)
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                  sliver: SliverGrid(
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 3,
+                          crossAxisSpacing: 8,
+                          mainAxisSpacing: 8,
+                          childAspectRatio: 1,
+                        ),
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) => Stack(
+                        fit: StackFit.expand,
+                        children: [
+                          Container(
+                            decoration: BoxDecoration(
+                              border: Border.all(
+                                color: Theme.of(context).colorScheme.primary,
+                              ),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            clipBehavior: Clip.antiAlias,
+                            child: kIsWeb
+                                ? Image.memory(
+                                    webImages[index],
+                                    fit: BoxFit.cover,
+                                  )
+                                : Image.file(
+                                    File(imagePickedFiles[index].path!),
+                                    fit: BoxFit.cover,
+                                  ),
+                          ),
+                          Positioned(
+                            top: 4,
+                            right: 4,
+                            child: Material(
+                              type: MaterialType.transparency,
+                              child: InkWell(
+                                onTap: () => removeImage(index),
+                                customBorder: const CircleBorder(),
+                                child: Container(
+                                  padding: const EdgeInsets.all(4),
+                                  decoration: BoxDecoration(
+                                    color: Theme.of(context).colorScheme.error,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Icon(
+                                    Icons.close,
+                                    size: 16,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.onError,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      childCount: imagePickedFiles.length,
+                    ),
+                  ),
+                ),
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                sliver: SliverToBoxAdapter(
+                  child: SizedBox(
+                    height: imagePickedFiles.isEmpty ? 200 : 80,
+                    child: MaterialButton(
+                      onPressed: pickImages,
+                      color: Theme.of(context).colorScheme.secondaryContainer,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.add_photo_alternate,
+                            size: imagePickedFiles.isEmpty ? 48 : 32,
+                            color: Theme.of(context).colorScheme.primary,
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            imagePickedFiles.isEmpty
+                                ? "Add Photos"
+                                : "Add More Photos",
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.primary,
+                              fontSize: imagePickedFiles.isEmpty ? 16 : 14,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }

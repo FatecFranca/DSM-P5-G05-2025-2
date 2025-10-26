@@ -31,13 +31,31 @@ class Comment {
 
   // convert json -> comment
   factory Comment.fromJson(Map<String, dynamic> json) {
+    // Safely convert ids to strings
+    final id = json['id']?.toString() ?? '';
+    final postId = json['postId']?.toString() ?? '';
+    final userId = json['userId']?.toString() ?? '';
+    final userName = json['userName']?.toString() ?? '';
+    final text = json['text']?.toString() ?? '';
+
+    // Parse timestamp (could be Timestamp or ISO string)
+    DateTime timeStamp;
+    final raw = json['timeStamp'];
+    if (raw is Timestamp) {
+      timeStamp = raw.toDate();
+    } else if (raw is String) {
+      timeStamp = DateTime.tryParse(raw) ?? DateTime.now();
+    } else {
+      timeStamp = DateTime.now();
+    }
+
     return Comment(
-      id: json['id'],
-      postId: json['postId'],
-      userId: json['userId'],
-      userName: json['userName'],
-      text: json['text'],
-      timeStamp: (json['timeStamp'] as Timestamp).toDate(),
+      id: id,
+      postId: postId,
+      userId: userId,
+      userName: userName,
+      text: text,
+      timeStamp: timeStamp,
     );
   }
 }

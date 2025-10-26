@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 class ApiService {
   static const String baseUrl = 'http://localhost:8080/';
 
-  Future<Map<String, dynamic>> post(
+  Future<dynamic> post(
     String path,
     Map<String, dynamic> body, {
     String? token,
@@ -12,8 +12,10 @@ class ApiService {
     final headers = {'Content-Type': 'application/json'};
     if (token != null) headers['Authorization'] = 'Bearer $token';
 
+    final uri = Uri.parse('$baseUrl$path');
+
     final response = await http.post(
-      Uri.parse('$baseUrl$path'),
+      uri,
       headers: headers,
       body: jsonEncode(body),
     );
@@ -25,13 +27,12 @@ class ApiService {
     }
   }
 
-  Future<Map<String, dynamic>> get(String path, {String? token}) async {
+  Future<dynamic> get(String path, {String? token}) async {
     final headers = {'Content-Type': 'application/json'};
     if (token != null) headers['Authorization'] = 'Bearer $token';
-    final response = await http.get(
-      Uri.parse('$baseUrl$path'),
-      headers: headers,
-    );
+    final uri = Uri.parse('$baseUrl$path');
+
+    final response = await http.get(uri, headers: headers);
 
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
@@ -40,7 +41,7 @@ class ApiService {
     }
   }
 
-  Future<Map<String, dynamic>> put(
+  Future<dynamic> put(
     String path,
     Map<String, dynamic> body, {
     String? token,
@@ -48,8 +49,10 @@ class ApiService {
     final headers = {'Content-Type': 'application/json'};
     if (token != null) headers['Authorization'] = 'Bearer $token';
 
+    final uri = Uri.parse('$baseUrl$path');
+
     final response = await http.put(
-      Uri.parse('$baseUrl$path'),
+      uri,
       headers: headers,
       body: jsonEncode(body),
     );
@@ -67,6 +70,29 @@ class ApiService {
       return json['url'];
     } catch (_) {
       return null;
+    }
+  }
+
+  Future<dynamic> delete(
+    String path, {
+    String? token,
+    Map<String, dynamic>? body,
+  }) async {
+    final headers = {'Content-Type': 'application/json'};
+    if (token != null) headers['Authorization'] = 'Bearer $token';
+
+    final uri = Uri.parse('$baseUrl$path');
+
+    final response = await http.delete(
+      uri,
+      headers: headers,
+      body: body != null ? jsonEncode(body) : null,
+    );
+
+    if (response.statusCode == 200 || response.statusCode == 204) {
+      return response.body.isNotEmpty ? jsonDecode(response.body) : {};
+    } else {
+      throw Exception('Request failed: ${response.body}');
     }
   }
 }

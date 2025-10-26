@@ -37,19 +37,13 @@ class BackendAuthRepo implements AuthRepo {
       'email': email,
       'password': password,
     });
-    print("BackendAuthRepo - Login response data: $data");
     final tokenCandidate = data['token'] ?? data['access_token'];
-    print("BackendAuthRepo - Token candidate: $tokenCandidate");
     if (tokenCandidate != null) {
       if (tokenCandidate is String) {
         _token = tokenCandidate;
-        print("BackendAuthRepo - Set token from string: $_token");
       } else if (tokenCandidate is Map && tokenCandidate['token'] != null) {
         _token = tokenCandidate['token'];
-        print("BackendAuthRepo - Set token from map: $_token");
       }
-    } else {
-      print("BackendAuthRepo - Warning: No token found in response");
     }
 
     final userData = data['user'] ?? data;
