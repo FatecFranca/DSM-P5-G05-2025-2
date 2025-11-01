@@ -73,17 +73,37 @@ class BackendPostRepo implements PostRepo {
   @override
   Future<void> toggleLikePost(String postId, String userId) async {
     if (_token == null) throw Exception("Não autorizado");
-
+    final numericPostId = int.parse(postId);
     try {
-      final numericPostId = int.parse(postId);
-      await apiService.post('posts/$numericPostId/like', {}, token: _token);
-    } catch (e) {
-      try {
-        final numericPostId = int.parse(postId);
-        await apiService.delete('posts/$numericPostId/unlike', token: _token);
-      } catch (e2) {
-        throw Exception("Erro ao alternar like: $e2");
+      final uri = Uri.parse('${ApiService.baseUrl}posts/$numericPostId/like');
+      final headers = {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $_token',
+      };
+      final response = await http.post(uri, headers: headers);
+
+      if (response.statusCode == 201) {
+        return;
+      } else if (response.statusCode == 400 || response.statusCode == 404) {
+        final unlikeUri = Uri.parse(
+          '${ApiService.baseUrl}posts/$numericPostId/unlike',
+        );
+        final unlikeResponse = await http.delete(unlikeUri, headers: headers);
+
+        if (unlikeResponse.statusCode == 200) {
+          return;
+        } else {
+          throw Exception(
+            'Erro no unlike: ${unlikeResponse.statusCode} - ${unlikeResponse.body}',
+          );
+        }
+      } else {
+        throw Exception(
+          'Erro inesperado: ${response.statusCode} - ${response.body}',
+        );
       }
+    } catch (e) {
+      throw Exception("Erro ao alternar like: $e");
     }
   }
 
