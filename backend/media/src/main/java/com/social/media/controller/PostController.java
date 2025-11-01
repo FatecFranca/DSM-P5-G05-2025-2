@@ -67,7 +67,7 @@ public class PostController {
             @AuthenticationPrincipal UserDetails user
     ){
         this.likeService.likePost(postId, user.getUsername());
-        return ResponseEntity.ok("Liked post " + postId);
+        return ResponseEntity.status(201).build();
     }
 
     @DeleteMapping("/{id}/unlike")
