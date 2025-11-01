@@ -1,8 +1,12 @@
 package com.social.media.controller;
 
+import com.social.media.domain.posts.comment.Comment;
+import com.social.media.domain.posts.comment.dto.CommentCreateDto;
+import com.social.media.domain.posts.comment.dto.CommentResponseDto;
 import com.social.media.domain.posts.dto.CreatePostDto;
 import com.social.media.domain.posts.dto.ResponsePostDto;
 import com.social.media.domain.posts.images.dto.PostImagesResponseDto;
+import com.social.media.services.CommentService;
 import com.social.media.services.LikeService;
 import com.social.media.services.PostImageService;
 import com.social.media.services.PostService;
@@ -23,11 +27,13 @@ public class PostController {
     private final PostService postService;
     private final LikeService likeService;
     private final PostImageService postImageService;
+    private final CommentService commentService;
 
-    public PostController(PostService postService, LikeService likeService, PostImageService postImageService) {
+    public PostController(PostService postService, LikeService likeService, PostImageService postImageService, CommentService commentService) {
         this.postService = postService;
         this.likeService = likeService;
         this.postImageService = postImageService;
+        this.commentService = commentService;
     }
 
 
@@ -45,6 +51,14 @@ public class PostController {
             @AuthenticationPrincipal UserDetails user
     ){
         return ResponseEntity.ok(this.postService.getAllPosts(user.getUsername()));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deletePost(
+            @PathVariable("id") Long postId
+    ){
+        this.postService.delete(postId);
+        return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/{id}/like")
@@ -86,6 +100,25 @@ public class PostController {
         return ResponseEntity.ok()
                 .contentType(MediaType.IMAGE_PNG)
                 .body(image);
+    }
+
+    @GetMapping("/{id}/comments")
+    public ResponseEntity<List<CommentResponseDto>> getAllComments(@PathVariable("id")  Long postId){
+        return ResponseEntity.ok(commentService.getCommentsByPostId(postId));
+    }
+
+    @PostMapping("/{id}/comments")
+    public ResponseEntity<CommentResponseDto> getComments(@RequestBody CommentCreateDto comment){
+        CommentResponseDto response = commentService.createComment(comment);
+        return ResponseEntity.status(201).body(response);
+    }
+
+    @DeleteMapping("/{id}/comments/{commentId}")
+    public ResponseEntity<?> deleteComment(
+            @PathVariable("commentId") Long commentId
+    ){
+        commentService.deleteComment(commentId);
+        return ResponseEntity.noContent().build();
     }
 
 }

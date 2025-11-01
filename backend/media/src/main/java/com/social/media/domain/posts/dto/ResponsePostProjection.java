@@ -1,6 +1,9 @@
 package com.social.media.domain.posts.dto;
 
+import com.social.media.domain.like.Like;
+
 import java.time.LocalDateTime;
+import java.util.List;
 
 public interface ResponsePostProjection {
     Long getId();
@@ -8,5 +11,5 @@ public interface ResponsePostProjection {
     String getImageUrl();
     LocalDateTime getCreatedAt();
     Long getUserId();
-    long getLikes();
+    List<Like> getLikes();
 }

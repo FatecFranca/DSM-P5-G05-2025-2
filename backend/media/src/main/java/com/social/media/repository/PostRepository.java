@@ -13,17 +13,4 @@ import java.util.List;
 
 @Repository
 public interface PostRepository extends JpaRepository<Post, Long> {
-
-    @Query(value = """
-    SELECT 
-        p.*, COUNT(l) as likes
-    FROM posts p
-    LEFT JOIN likes l
-    ON l.post_id = p.id
-    WHERE p.user_id <> :id
-    GROUP BY p.id;
-    """,
-    nativeQuery = true)
-    List<ResponsePostProjection> findAllPostsWithLikeCount(@Param("id") Long id);
-
 }
