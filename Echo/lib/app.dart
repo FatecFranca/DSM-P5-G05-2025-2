@@ -13,9 +13,11 @@ import 'package:socialapp/features/post/presentation/cubits/posts_cubit.dart';
 import 'package:socialapp/features/profile/data/firebase_profile_repo.dart';
 import 'package:socialapp/features/profile/data/backend_profile_repo.dart';
 import 'package:socialapp/features/profile/presentation/cubits/profile_cubit.dart';
+import 'package:socialapp/features/search/data/firebase_search_repo.dart';
+import 'package:socialapp/features/search/presentation/cubits/search_cubits.dart';
 import 'package:socialapp/features/storage/data/firebase_storage_repo.dart';
 import 'package:socialapp/features/storage/data/backend_storage_repo.dart';
-import 'package:socialapp/themes/light_mode.dart';
+import 'package:socialapp/themes/theme_cubit.dart';
 
 /*
 
@@ -53,6 +55,10 @@ class MyApp extends StatelessWidget {
   final firebasePostRepo = FirebasePostRepo();
   final BackendPostRepo backendPostRepo = BackendPostRepo();
 
+  // search repo
+  final firebaseSearchRepo = FirebaseSearchRepo();
+  // conexao com o back-end //
+
   MyApp({super.key});
 
   @override
@@ -82,37 +88,51 @@ class MyApp extends StatelessWidget {
               storageRepo: backendStorageRepo,
             ),
           ),
-        ],
-        child: MaterialApp(
-          debugShowCheckedModeBanner: false,
-          theme: lightMode,
-          home: BlocConsumer<AuthCubit, AuthState>(
-            builder: (context, authState) {
-              if (authState is Unauthenticated) {
-                return const AuthPage();
-              }
-              if (authState is Authenticated) {
-                return const HomePage();
-              }
-              return const Scaffold(
-                body: Center(child: CircularProgressIndicator()),
-              );
-            },
-            listener: (context, state) {
-              if (state is AuthError) {
-                ScaffoldMessenger.of(
-                  context,
-                ).showSnackBar(SnackBar(content: Text(state.errorMessage)));
-              }
 
-              if (state is Authenticated) {
-                if (backendAuthRepo.token != null) {
-                  backendProfileRepo.setToken(backendAuthRepo.token!);
-                  backendStorageRepo.setToken(backendAuthRepo.token!);
-                  backendPostRepo.setToken(backendAuthRepo.token!);
+          // search cubit
+          BlocProvider<SearchCubit>(
+            create: (context) => SearchCubit(searchRepo: firebaseSearchRepo),
+          ),
+
+          // theme cubit
+          BlocProvider<ThemeCubit>(create: (context) => ThemeCubit()),
+        ],
+
+        // bloc builder: themes
+        child: BlocBuilder<ThemeCubit, ThemeData>(
+          builder: (context, currentTheme) => MaterialApp(
+            debugShowCheckedModeBanner: false,
+            theme: currentTheme,
+
+            // bloc builder: check current auth state
+            home: BlocConsumer<AuthCubit, AuthState>(
+              builder: (context, authState) {
+                if (authState is Unauthenticated) {
+                  return const AuthPage();
                 }
-              }
-            },
+                if (authState is Authenticated) {
+                  return const HomePage();
+                }
+                return const Scaffold(
+                  body: Center(child: CircularProgressIndicator()),
+                );
+              },
+              listener: (context, state) {
+                if (state is AuthError) {
+                  ScaffoldMessenger.of(
+                    context,
+                  ).showSnackBar(SnackBar(content: Text(state.errorMessage)));
+                }
+
+                if (state is Authenticated) {
+                  if (backendAuthRepo.token != null) {
+                    backendProfileRepo.setToken(backendAuthRepo.token!);
+                    backendStorageRepo.setToken(backendAuthRepo.token!);
+                    backendPostRepo.setToken(backendAuthRepo.token!);
+                  }
+                }
+              },
+            ),
           ),
         ),
       ),

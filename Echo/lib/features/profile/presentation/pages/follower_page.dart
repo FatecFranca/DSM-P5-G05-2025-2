@@ -9,6 +9,7 @@ This page will display a tab bar to show
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:socialapp/features/profile/presentation/components/user_tile.dart';
 import 'package:socialapp/features/profile/presentation/cubits/profile_cubit.dart';
 
 class FollowerPage extends StatelessWidget {
@@ -75,7 +76,7 @@ class FollowerPage extends StatelessWidget {
                   // user loaded
                   if (snapshot.hasData) {
                     final user = snapshot.data!;
-                    return ListTile(title: Text(user.name));
+                    return UserTile(user: user,);
                   }
                   // loading...
                   else if (snapshot.connectionState ==
