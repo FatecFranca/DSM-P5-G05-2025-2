@@ -21,7 +21,8 @@ class ApiService {
     );
 
     if (response.statusCode == 200 || response.statusCode == 201) {
-      return jsonDecode(response.body);
+      // Se o corpo estiver vazio, retorna objeto vazio
+      return response.body.isEmpty ? {} : jsonDecode(response.body);
     } else {
       throw Exception('Request failed: ${response.body}');
     }
@@ -35,7 +36,7 @@ class ApiService {
     final response = await http.get(uri, headers: headers);
 
     if (response.statusCode == 200) {
-      return jsonDecode(response.body);
+      return response.body.isEmpty ? {} : jsonDecode(response.body);
     } else {
       throw Exception('Request failed: ${response.body}');
     }
@@ -58,7 +59,7 @@ class ApiService {
     );
 
     if (response.statusCode == 200 || response.statusCode == 201) {
-      return jsonDecode(response.body);
+      return response.body.isEmpty ? {} : jsonDecode(response.body);
     } else {
       throw Exception('Request failed: ${response.body}');
     }

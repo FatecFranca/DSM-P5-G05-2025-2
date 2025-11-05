@@ -3,6 +3,7 @@ package com.social.media.repository;
 import com.social.media.domain.posts.Post;
 import com.social.media.domain.posts.images.PostImages;
 import jakarta.transaction.Transactional;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -19,4 +20,12 @@ public interface PostImageRepository extends JpaRepository<PostImages, Long> {
 """,
     nativeQuery = true)
     List<PostImages> findByPostIdAll(@Param("postId")Long postId);
+
+    @Query(value = """
+    select count(1) from posts_image where post_id = :postId
+""",
+    nativeQuery = true)
+    Long countByPostId(@Param("postId")Long postId);
+
+    void deleteAllByPostId(Long postId);
 }

@@ -52,4 +52,12 @@ public class PostImageService {
         return this.postImageRepository.findById(id).get().getImage();
 
     }
+
+    public Long getImageCount(){
+        return this.postImageRepository.count();
+    }
+
+    public void deleteAllImages(Long postId){
+        this.postImageRepository.deleteAllByPostId(postId);
+    }
 }
