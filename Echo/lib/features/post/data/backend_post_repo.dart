@@ -112,12 +112,13 @@ class BackendPostRepo implements PostRepo {
     if (_token == null) throw Exception("Não autorizado");
     try {
       final numericPostId = int.parse(postId);
-      await apiService.post(
+      final commentJson = comment.toJson();
+      final response = await apiService.post(
         'posts/$numericPostId/comments',
-        comment.toJson(),
+        commentJson,
         token: _token,
       );
-    } catch (e) {
+    } catch (e, stack) {
       throw Exception("Erro ao adicionar comentário: $e");
     }
   }

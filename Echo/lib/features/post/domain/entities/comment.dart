@@ -6,7 +6,7 @@ class Comment {
   final String userId;
   final String userName;
   final String text;
-  final DateTime timeStamp;
+  final DateTime timestamp;
 
   Comment({
     required this.id,
@@ -14,10 +14,10 @@ class Comment {
     required this.userId,
     required this.userName,
     required this.text,
-    required this.timeStamp,
+    required this.timestamp,
   });
 
-  // covert comment -> json
+  // convert comment -> json
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -25,37 +25,44 @@ class Comment {
       'userId': userId,
       'userName': userName,
       'text': text,
-      'timeStamp': Timestamp.fromDate(timeStamp),
+      'timestamp': timestamp.toIso8601String(),
     };
   }
 
-  // convert json -> comment
   factory Comment.fromJson(Map<String, dynamic> json) {
-    // Safely convert ids to strings
     final id = json['id']?.toString() ?? '';
     final postId = json['postId']?.toString() ?? '';
     final userId = json['userId']?.toString() ?? '';
-    final userName = json['userName']?.toString() ?? '';
-    final text = json['text']?.toString() ?? '';
 
-    // Parse timestamp (could be Timestamp or ISO string)
-    DateTime timeStamp;
-    final raw = json['timeStamp'];
-    if (raw is Timestamp) {
-      timeStamp = raw.toDate();
-    } else if (raw is String) {
-      timeStamp = DateTime.tryParse(raw) ?? DateTime.now();
-    } else {
-      timeStamp = DateTime.now();
+    String userName = json['userName']?.toString() ?? '';
+    if (userName.isEmpty && json.containsKey('name')) {
+      userName = json['name']?.toString() ?? '';
     }
 
-    return Comment(
+    final text = json['text']?.toString() ?? '';
+
+    DateTime timestamp;
+    final raw = json['timestamp'];
+    if (raw is Timestamp) {
+      timestamp = raw.toDate();
+    } else if (raw is String) {
+      try {
+        timestamp = DateTime.parse(raw);
+      } catch (e) {
+        timestamp = DateTime.now();
+      }
+    } else {
+      timestamp = DateTime.now();
+    }
+
+    final comment = Comment(
       id: id,
       postId: postId,
       userId: userId,
       userName: userName,
       text: text,
-      timeStamp: timeStamp,
+      timestamp: timestamp,
     );
+    return comment;
   }
 }

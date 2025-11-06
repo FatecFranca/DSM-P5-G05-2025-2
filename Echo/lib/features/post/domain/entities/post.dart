@@ -71,38 +71,41 @@ class Post {
       comments = [];
     }
 
-    // handle image url/id - could be null, string or number
     final imageUrlRaw = json['imageUrl'];
     final List<String> imageIds = [];
     if (imageUrlRaw != null) {
       imageIds.add(imageUrlRaw.toString());
     }
 
-    // Safely convert IDs and fields to strings
     final id = json['id']?.toString() ?? '';
     final userId = json['userId']?.toString() ?? '';
     final userName = json['name']?.toString() ?? '';
     final text = json['text']?.toString() ?? '';
 
-    // Parse timestamp (could be Timestamp or ISO string)
     DateTime timestamp;
-    final rawTimestamp = json['timestamp'];
+    final rawTimestamp =
+        json['createdAt'] ?? json['timestamp']; // tenta createdAt primeiro
     if (rawTimestamp is Timestamp) {
       timestamp = rawTimestamp.toDate();
     } else if (rawTimestamp is String) {
-      timestamp = DateTime.tryParse(rawTimestamp) ?? DateTime.now();
+      try {
+        timestamp = DateTime.parse(rawTimestamp);
+      } catch (e) {
+        timestamp = DateTime.now();
+      }
     } else {
-      timestamp = DateTime.now(); // Fallback
+      timestamp = DateTime.now();
     }
 
-    // Ensure likes is a List<String>
-    final likes =
-        (json['likes'] as List<dynamic>?)
-            ?.map((e) => e?.toString() ?? '')
-            .where((s) => s.isNotEmpty)
-            .toList() ??
-        [];
-
+    // Tratar likes - pode ser List<dynamic> ou int (contagem)
+    List<String> likes = [];
+    final rawLikes = json['likes'];
+    if (rawLikes is List) {
+      likes = rawLikes
+          .map((e) => e?.toString() ?? '')
+          .where((s) => s.isNotEmpty)
+          .toList();
+    }
     return Post(
       id: id,
       userId: userId,

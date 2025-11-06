@@ -127,7 +127,7 @@ class _PostTileState extends State<PostTile> {
       userId: currentUser!.uid,
       userName: currentUser!.name,
       text: commentTextController.text,
-      timeStamp: DateTime.now(),
+      timestamp: DateTime.now(),
     );
 
     if (commentTextController.text.isNotEmpty) {
