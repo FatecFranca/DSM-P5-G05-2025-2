@@ -14,6 +14,7 @@ import 'package:socialapp/features/profile/data/firebase_profile_repo.dart';
 import 'package:socialapp/features/profile/data/backend_profile_repo.dart';
 import 'package:socialapp/features/profile/presentation/cubits/profile_cubit.dart';
 import 'package:socialapp/features/search/data/firebase_search_repo.dart';
+import 'package:socialapp/features/search/data/backend_search_repo.dart';
 import 'package:socialapp/features/search/presentation/cubits/search_cubits.dart';
 import 'package:socialapp/features/storage/data/firebase_storage_repo.dart';
 import 'package:socialapp/features/storage/data/backend_storage_repo.dart';
@@ -57,6 +58,7 @@ class MyApp extends StatelessWidget {
 
   // search repo
   final firebaseSearchRepo = FirebaseSearchRepo();
+  final backendSearchRepo = BackendSearchRepo();
   // conexao com o back-end //
 
   MyApp({super.key});
@@ -91,7 +93,7 @@ class MyApp extends StatelessWidget {
 
           // search cubit
           BlocProvider<SearchCubit>(
-            create: (context) => SearchCubit(searchRepo: firebaseSearchRepo),
+            create: (context) => SearchCubit(searchRepo: backendSearchRepo),
           ),
 
           // theme cubit
@@ -129,6 +131,7 @@ class MyApp extends StatelessWidget {
                     backendProfileRepo.setToken(backendAuthRepo.token!);
                     backendStorageRepo.setToken(backendAuthRepo.token!);
                     backendPostRepo.setToken(backendAuthRepo.token!);
+                    backendSearchRepo.setToken(backendAuthRepo.token!);
                   }
                 }
               },

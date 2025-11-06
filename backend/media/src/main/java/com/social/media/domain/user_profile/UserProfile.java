@@ -10,7 +10,7 @@ public class UserProfile {
     @Id
     private Long id;
 
-    @OneToOne
+    @OneToOne(fetch = FetchType.EAGER, cascade = CascadeType.REMOVE)
     @MapsId
     @JoinColumn(name = "user_id")
     private User user;

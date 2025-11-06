@@ -1,9 +1,12 @@
 package com.social.media.controller;
 
+import com.social.media.domain.user_profile.dto.SearchUserProfileDto;
 import com.social.media.domain.user_profile.dto.UserProfileDto;
 import com.social.media.domain.user_profile.dto.UserProfileFollowDto;
 import com.social.media.services.FollowService;
 import com.social.media.services.UserProfileService;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -12,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.List;
 
 @RestController
 @RequestMapping("/profile")
@@ -23,6 +27,13 @@ public class UserProfileController {
     public UserProfileController(UserProfileService userProfileService, FollowService followService) {
         this.userProfileService = userProfileService;
         this.followService = followService;
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<List<SearchUserProfileDto>> searchUserProfile(
+            @RequestParam String keyword
+    ){
+        return ResponseEntity.ok(this.userProfileService.findByKeyword(keyword));
     }
 
     @GetMapping("/{id}")

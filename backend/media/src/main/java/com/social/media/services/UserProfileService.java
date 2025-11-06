@@ -4,6 +4,7 @@ import com.social.media.domain.follow.Follow;
 import com.social.media.domain.follow.dto.ResponseFollowDto;
 import com.social.media.domain.user.User;
 import com.social.media.domain.user_profile.UserProfile;
+import com.social.media.domain.user_profile.dto.SearchUserProfileDto;
 import com.social.media.domain.user_profile.dto.UserProfileDto;
 import com.social.media.domain.user_profile.dto.UserProfileFollowDto;
 import com.social.media.exception.UserNotAllowedException;
@@ -63,6 +64,11 @@ public class UserProfileService {
                 .orElseThrow(() -> new UserNotFoundException("User not found"));
     }
 
+    public List<SearchUserProfileDto> findByKeyword(String keyword){
+        return this.userProfileRepository.findByKeyword(keyword.toUpperCase())
+                .stream().map(SearchUserProfileDto::toDto).collect(Collectors.toList());
+    }
+
     private UserProfileDto createDto(UserProfile userProfile) {
         return new UserProfileDto(userProfile.getFullName(), userProfile.getBio());
     }
@@ -90,6 +96,7 @@ public class UserProfileService {
                 followerIds
         );
     }
+
 
 
 }
