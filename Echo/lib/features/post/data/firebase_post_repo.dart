@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:socialapp/features/post/domain/entities/comment.dart';
 import 'package:socialapp/features/post/domain/entities/post.dart';
+import 'package:socialapp/features/post/domain/entities/post_image.dart';
 import 'package:socialapp/features/post/domain/repos/post_repo.dart';
 
 class FirebasePostRepo implements PostRepo {
@@ -158,5 +159,32 @@ class FirebasePostRepo implements PostRepo {
     throw UnimplementedError(
       'Upload de imagens não é suportado no Firebase. Use o BackendPostRepo.',
     );
+  }
+
+  @override
+  Future<List<PostImage>> fetchPostImages(String postId) {
+    // Firebase não suporta busca de imagens diretamente.
+    // Essa funcionalidade só está disponível no BackendPostRepo
+    throw UnimplementedError(
+      'Busca de imagens não é suportado no Firebase. Use o BackendPostRepo.',
+    );
+  }
+
+  @override
+  Future<List<Comment>> fetchPostComments(String postId) async {
+    try {
+      // get post documment
+      final postDoc = await postsCollection.doc(postId).get();
+
+      if (postDoc.exists) {
+        // convert json object -> post
+        final post = Post.fromJson(postDoc.data() as Map<String, dynamic>);
+        return post.comments;
+      } else {
+        throw Exception("Post not found");
+      }
+    } catch (e) {
+      throw Exception("Error fetching comments: $e");
+    }
   }
 }

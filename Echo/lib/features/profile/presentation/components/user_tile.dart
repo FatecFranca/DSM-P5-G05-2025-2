@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:socialapp/features/profile/domain/entities/profile_user.dart';
+import 'package:socialapp/features/profile/presentation/components/auth_image.dart';
 import 'package:socialapp/features/profile/presentation/pages/profile_page.dart';
 
 class UserTile extends StatelessWidget {
@@ -15,7 +16,31 @@ class UserTile extends StatelessWidget {
       subtitleTextStyle: TextStyle(
         color: Theme.of(context).colorScheme.primary,
       ),
-      leading: Icon(Icons.person, color: Theme.of(context).colorScheme.primary),
+      leading: AuthImage(
+        userId: user.uid,
+        width: 40,
+        height: 40,
+        fit: BoxFit.cover,
+        placeholder: Icon(
+          Icons.person,
+          color: Theme.of(context).colorScheme.primary,
+        ),
+        errorWidget: Icon(
+          Icons.person,
+          color: Theme.of(context).colorScheme.primary,
+        ),
+        imageBuilder: (context, imageProvider) => Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            image: DecorationImage(
+              image: imageProvider,
+              fit: BoxFit.cover,
+            ),
+          ),
+        ),
+      ),
       trailing: Icon(
         Icons.arrow_forward,
         color: Theme.of(context).colorScheme.primary,

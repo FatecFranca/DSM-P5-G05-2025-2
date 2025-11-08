@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import 'package:socialapp/features/post/domain/entities/comment.dart';
 import 'package:socialapp/features/post/domain/entities/post.dart';
+import 'package:socialapp/features/post/domain/entities/post_image.dart';
 
 abstract class PostRepo {
   Future<List<Post>> fetchAllPosts();
@@ -12,4 +13,6 @@ abstract class PostRepo {
   Future<void> addComment(String postId, Comment comment);
   Future<void> deleteComment(String postId, String commentId);
   Future<List<String>> uploadPostImages(String postId, List<Uint8List> images);
+  Future<List<PostImage>> fetchPostImages(String postId);
+  Future<List<Comment>> fetchPostComments(String postId);
 }

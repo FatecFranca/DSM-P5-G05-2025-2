@@ -7,15 +7,15 @@ import 'package:socialapp/features/post/presentation/cubits/posts_cubit.dart';
 
 class CommentTile extends StatefulWidget {
   final Comment comment;
+  final VoidCallback? onDeleted;
 
-  const CommentTile({super.key, required this.comment});
+  const CommentTile({super.key, required this.comment, this.onDeleted});
 
   @override
   State<CommentTile> createState() => _CommentTileState();
 }
 
 class _CommentTileState extends State<CommentTile> {
-  // current user
   AppUser? currentUser;
   bool isOwlPost = false;
 
@@ -32,27 +32,35 @@ class _CommentTileState extends State<CommentTile> {
     isOwlPost = (widget.comment.userId == currentUser!.uid);
   }
 
-  // show options for deletion
   void showOptions() {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text("Delete Comment?"),
         actions: [
-          // cancel button
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
             child: const Text("Cancel"),
           ),
 
-          // delete button
           TextButton(
-            onPressed: () {
-              context.read<PostCubit>().deleteComment(
-                widget.comment.postId,
-                widget.comment.id,
-              );
+            onPressed: () async {
               Navigator.of(context).pop();
+              try {
+                await context.read<PostCubit>().deleteComment(
+                  widget.comment.postId,
+                  widget.comment.id,
+                );
+                if (widget.onDeleted != null) {
+                  widget.onDeleted!();
+                }
+              } catch (e) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Erro ao deletar comentário: $e')),
+                  );
+                }
+              }
             },
             child: const Text("Delete"),
           ),
@@ -67,7 +75,6 @@ class _CommentTileState extends State<CommentTile> {
       padding: const EdgeInsets.symmetric(horizontal: 20.0),
       child: Row(
         children: [
-          // name
           Text(
             widget.comment.userName,
             style: const TextStyle(fontWeight: FontWeight.bold),
@@ -75,19 +82,18 @@ class _CommentTileState extends State<CommentTile> {
 
           const SizedBox(width: 10.0),
 
-          // comment text
           Text(widget.comment.text),
 
           const Spacer(),
 
-          // delete button
-          if (isOwlPost) GestureDetector(
-            onTap: showOptions,
-            child: Icon(
-              Icons.more_horiz,
-              color: Theme.of(context).colorScheme.primary,
+          if (isOwlPost)
+            GestureDetector(
+              onTap: showOptions,
+              child: Icon(
+                Icons.more_horiz,
+                color: Theme.of(context).colorScheme.primary,
+              ),
             ),
-          ),
         ],
       ),
     );

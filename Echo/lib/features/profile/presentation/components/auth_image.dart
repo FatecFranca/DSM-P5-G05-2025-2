@@ -1,10 +1,11 @@
+import 'dart:typed_data';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:http/http.dart' as http;
 import 'package:socialapp/config/api_service.dart';
 import 'package:socialapp/features/auth/data/backend_auth_repo.dart';
+import 'package:socialapp/features/storage/data/image_cache_service.dart';
 
 class AuthImage extends StatelessWidget {
   final String userId;
@@ -35,41 +36,29 @@ class AuthImage extends StatelessWidget {
     ).toString();
 
     if (kIsWeb) {
-      return FutureBuilder<http.Response>(
-        future: http.get(
-          Uri.parse(fullImageUrl),
-          headers: backendAuthRepo.token != null
-              ? {'Authorization': 'Bearer ${backendAuthRepo.token}'}
-              : {},
-        ),
+      final cacheService = ImageCacheService();
+      final headers = backendAuthRepo.token != null
+          ? <String, String>{'Authorization': 'Bearer ${backendAuthRepo.token}'}
+          : <String, String>{};
+
+      return FutureBuilder<Uint8List?>(
+        future: cacheService.getImage(fullImageUrl, headers),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return placeholder ??
                 const Center(child: CircularProgressIndicator());
           }
 
-          if (snapshot.hasError) {
+          if (snapshot.hasError || snapshot.data == null) {
             return errorWidget ?? const Icon(Icons.error);
           }
 
-          final resp = snapshot.data;
-          if (resp == null) return errorWidget ?? const Icon(Icons.error);
-
-          if (resp.statusCode == 200) {
-            final bytes = resp.bodyBytes;
-            final provider = MemoryImage(bytes);
-            if (imageBuilder != null) {
-              return imageBuilder!(context, provider);
-            }
-            return Image(
-              image: provider,
-              width: width,
-              height: height,
-              fit: fit,
-            );
+          final bytes = snapshot.data!;
+          final provider = MemoryImage(bytes);
+          if (imageBuilder != null) {
+            return imageBuilder!(context, provider);
           }
-
-          return errorWidget ?? const Icon(Icons.error);
+          return Image(image: provider, width: width, height: height, fit: fit);
         },
       );
     }
@@ -87,6 +76,10 @@ class AuthImage extends StatelessWidget {
       errorWidget: (context, url, error) =>
           errorWidget ?? const Icon(Icons.error),
       imageBuilder: imageBuilder,
+      maxWidthDiskCache: 1000,
+      maxHeightDiskCache: 1000,
+      memCacheWidth: width?.toInt(),
+      memCacheHeight: height?.toInt(),
     );
   }
 }

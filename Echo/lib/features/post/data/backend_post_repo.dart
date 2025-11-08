@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 import 'package:socialapp/features/post/domain/entities/post.dart';
 import 'package:socialapp/features/post/domain/entities/comment.dart';
+import 'package:socialapp/features/post/domain/entities/post_image.dart';
 import 'package:socialapp/features/post/domain/repos/post_repo.dart';
 import '../../../config/api_service.dart';
 
@@ -177,5 +178,51 @@ class BackendPostRepo implements PostRepo {
     final List<dynamic> imagesData = jsonDecode(responseData) as List<dynamic>;
 
     return imagesData.map((imageData) => imageData['id'].toString()).toList();
+  }
+
+  @override
+  Future<List<PostImage>> fetchPostImages(String postId) async {
+    if (_token == null) throw Exception("Não autorizado");
+
+    try {
+      final numericPostId = int.parse(postId);
+      final data = await apiService.get(
+        'posts/$numericPostId/images',
+        token: _token,
+      );
+
+      if (data is List) {
+        return data
+            .map((img) => PostImage.fromJson(img as Map<String, dynamic>))
+            .toList();
+      }
+
+      return [];
+    } catch (e) {
+      throw Exception("Erro ao buscar imagens do post: $e");
+    }
+  }
+
+  @override
+  Future<List<Comment>> fetchPostComments(String postId) async {
+    if (_token == null) throw Exception("Não autorizado");
+
+    try {
+      final numericPostId = int.parse(postId);
+      final data = await apiService.get(
+        'posts/$numericPostId/comments',
+        token: _token,
+      );
+
+      if (data is List) {
+        return data
+            .map((comment) => Comment.fromJson(comment as Map<String, dynamic>))
+            .toList();
+      }
+
+      return [];
+    } catch (e) {
+      throw Exception("Erro ao buscar comentários do post: $e");
+    }
   }
 }

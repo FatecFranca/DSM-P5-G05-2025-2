@@ -1,12 +1,13 @@
+import 'dart:typed_data';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:http/http.dart' as http;
 import 'package:socialapp/config/api_service.dart';
 import 'package:socialapp/features/auth/data/backend_auth_repo.dart';
+import 'package:socialapp/features/storage/data/image_cache_service.dart';
 
-class PostImage extends StatelessWidget {
+class PostImage extends StatefulWidget {
   final String postId;
   final String imageId;
   final double? width;
@@ -29,66 +30,140 @@ class PostImage extends StatelessWidget {
   });
 
   @override
+  State<PostImage> createState() => _PostImageState();
+}
+
+class _PostImageState extends State<PostImage> {
+  Uint8List? _cachedBytes;
+  bool _isLoading = false;
+  bool _hasError = false;
+  bool _initialized = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _initialized = true;
+      if (kIsWeb) _loadImage();
+    });
+  }
+
+  @override
+  void didUpdateWidget(PostImage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.postId != widget.postId ||
+        oldWidget.imageId != widget.imageId) {
+      _cachedBytes = null;
+      _hasError = false;
+      if (kIsWeb && _initialized) _loadImage();
+    }
+  }
+
+  Future<void> _loadImage() async {
+    if (_cachedBytes != null || _isLoading) return;
+
+    setState(() {
+      _isLoading = true;
+      _hasError = false;
+    });
+
+    final backendAuthRepo = context.read<BackendAuthRepo>();
+    final fullImageUrl =
+        '${ApiService.baseUrl}posts/${widget.postId}/images/${widget.imageId}';
+
+    final Map<String, String> headers = backendAuthRepo.token != null
+        ? {'Authorization': 'Bearer ${backendAuthRepo.token}'}
+        : <String, String>{};
+
+    try {
+      final bytes = await ImageCacheService().getImage(fullImageUrl, headers);
+      if (mounted) {
+        setState(() {
+          _cachedBytes = bytes;
+          _isLoading = false;
+          _hasError = bytes == null;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _hasError = true;
+        });
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final backendAuthRepo = context.read<BackendAuthRepo>();
-
-    final fullImageUrl = Uri.parse(
-      '${ApiService.baseUrl}posts/$postId/images/$imageId',
-    ).toString();
+    final fullImageUrl =
+        '${ApiService.baseUrl}posts/${widget.postId}/images/${widget.imageId}';
+    final fixedHeight = widget.height ?? 300.0;
 
     if (kIsWeb) {
-      return FutureBuilder<http.Response>(
-        future: http.get(
-          Uri.parse(fullImageUrl),
-          headers: backendAuthRepo.token != null
-              ? {'Authorization': 'Bearer ${backendAuthRepo.token}'}
-              : {},
-        ),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return placeholder ??
-                const Center(child: CircularProgressIndicator());
-          }
+      if (_isLoading) {
+        return SizedBox(
+          width: widget.width,
+          height: fixedHeight,
+          child:
+              widget.placeholder ??
+              const Center(child: CircularProgressIndicator()),
+        );
+      }
 
-          if (snapshot.hasError) {
-            return errorWidget ?? const Icon(Icons.error);
-          }
+      if (_hasError || _cachedBytes == null) {
+        return SizedBox(
+          width: widget.width,
+          height: fixedHeight,
+          child: widget.errorWidget ?? const Icon(Icons.error),
+        );
+      }
 
-          final resp = snapshot.data;
-          if (resp == null) return errorWidget ?? const Icon(Icons.error);
+      try {
+        final provider = MemoryImage(_cachedBytes!);
+        if (widget.imageBuilder != null) {
+          return widget.imageBuilder!(context, provider);
+        }
 
-          if (resp.statusCode == 200) {
-            final bytes = resp.bodyBytes;
-            final provider = MemoryImage(bytes);
-            if (imageBuilder != null) {
-              return imageBuilder!(context, provider);
-            }
-            return Image(
-              image: provider,
-              width: width,
-              height: height,
-              fit: fit,
-            );
-          }
-
-          return errorWidget ?? const Icon(Icons.error);
-        },
-      );
+        return Image(
+          image: provider,
+          width: widget.width,
+          height: fixedHeight,
+          fit: widget.fit ?? BoxFit.cover,
+        );
+      } catch (_) {
+        return SizedBox(
+          width: widget.width,
+          height: fixedHeight,
+          child: widget.errorWidget ?? const Icon(Icons.broken_image),
+        );
+      }
     }
 
     return CachedNetworkImage(
       imageUrl: fullImageUrl,
       httpHeaders: backendAuthRepo.token != null
           ? {'Authorization': 'Bearer ${backendAuthRepo.token}'}
-          : null,
-      width: width,
-      height: height,
-      fit: fit,
-      placeholder: (context, url) =>
-          placeholder ?? const Center(child: CircularProgressIndicator()),
-      errorWidget: (context, url, error) =>
-          errorWidget ?? const Icon(Icons.error),
-      imageBuilder: imageBuilder,
+          : null, // <-- CORRETO
+      width: widget.width,
+      height: fixedHeight,
+      fit: widget.fit ?? BoxFit.cover,
+      fadeInDuration: Duration.zero,
+      fadeOutDuration: Duration.zero,
+      placeholder: (context, url) => SizedBox(
+        height: fixedHeight,
+        child:
+            widget.placeholder ??
+            const Center(child: CircularProgressIndicator()),
+      ),
+      errorWidget: (context, url, error) => SizedBox(
+        height: fixedHeight,
+        child: widget.errorWidget ?? const Icon(Icons.error),
+      ),
+      imageBuilder: widget.imageBuilder,
+      memCacheWidth: widget.width?.toInt(),
+      memCacheHeight: fixedHeight.toInt(),
     );
   }
 }
