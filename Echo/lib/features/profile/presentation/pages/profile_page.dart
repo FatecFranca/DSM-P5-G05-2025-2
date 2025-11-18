@@ -87,6 +87,74 @@ class _ProfilePageState extends State<ProfilePage> {
     });
   }
 
+  Future<void> _checkAddiction(String userId) async {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(child: CircularProgressIndicator()),
+    );
+
+    try {
+      final resp = await profileCubit.predictAddiction(userId);
+
+      Navigator.of(context).pop();
+
+      final classeRaw = resp?['classe']?.toString() ?? '';
+      final classe = classeRaw.toLowerCase();
+
+      String title = 'Resultado';
+      String message;
+
+      if (classe == 'moderado') {
+        message = 'Classe: Moderado\nTendência moderada — fique atento ao uso.';
+      } else if (classe == 'viciado') {
+        message =
+            'Classe: Viciado\nAlerta: indícios fortes de dependência. Considere procurar apoio.';
+      } else if (classe == 'nao_viciado' ||
+          classe == 'não_viciado' ||
+          classe == 'nao-viciado') {
+        message =
+            'Classe: Não viciado\nBoa notícia: sem sinais claros de dependência.';
+      } else if (classe.isEmpty) {
+        message = 'Classe não encontrada na resposta do servidor.';
+      } else {
+        message = 'Classe: ${classeRaw}\nResposta desconhecida do modelo.';
+      }
+
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text(title),
+          content: Text(message),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Fechar'),
+            ),
+          ],
+        ),
+      );
+    } catch (e) {
+      try {
+        Navigator.of(context).pop();
+      } catch (_) {}
+
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Erro'),
+          content: Text('Falha ao consultar a predição: $e'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Fechar'),
+            ),
+          ],
+        ),
+      );
+    }
+  }
+
   // BUILD UI
   @override
   Widget build(BuildContext context) {
@@ -211,6 +279,18 @@ class _ProfilePageState extends State<ProfilePage> {
                 const SizedBox(height: 10),
 
                 BioBox(text: user.bio),
+
+                const SizedBox(height: 16),
+
+                // botão para verificar se usuário é 'viciado'
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 25.0),
+                  child: ElevatedButton.icon(
+                    icon: const Icon(Icons.analytics),
+                    label: const Text('Verificar vício'),
+                    onPressed: () => _checkAddiction(user.uid),
+                  ),
+                ),
 
                 // posts
                 Padding(

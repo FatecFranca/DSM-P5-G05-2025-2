@@ -35,6 +35,7 @@ public class SecurityConfiguration {
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(req -> {
                     req.requestMatchers(HttpMethod.POST, "/auth/**").permitAll();
+                    req.requestMatchers(HttpMethod.POST, "ai/**").permitAll();
                     req.requestMatchers("/ws-chat/**").permitAll();
                     req.anyRequest().authenticated();
                 })

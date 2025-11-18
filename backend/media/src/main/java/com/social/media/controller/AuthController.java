@@ -10,6 +10,8 @@ import com.social.media.services.AuthenticationService;
 import com.social.media.services.JwtService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -52,5 +54,11 @@ public class AuthController {
         return ResponseEntity.ok(response);
     }
 
+    @PostMapping("/logout")
+    public ResponseEntity<String> logout(@AuthenticationPrincipal UserDetails user){
+        authenticationService.logout(user);
+
+        return ResponseEntity.ok("Logout realizado com sucesso");
+    }
+
 }
-//

@@ -75,10 +75,8 @@ class _PostCommentsPageState extends State<PostCommentsPage> {
   Future<void> deleteComment(String commentId) async {
     try {
       await postCubit.deleteComment(widget.post.id, commentId);
-      // Recarregar comentários após deletar
       fetchComments();
     } catch (e) {
-      // Tratar erro se necessário
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Erro ao deletar comentário: $e')),

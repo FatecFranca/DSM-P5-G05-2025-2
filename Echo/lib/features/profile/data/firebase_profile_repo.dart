@@ -8,7 +8,6 @@ class FirebaseProfileRepo implements ProfileRepo {
   @override
   Future<ProfileUser?> fetchUserProfile(String uid) async {
     try {
-      // get user document from firestone
       final userDoc = await firebaseFirestore
           .collection('users')
           .doc(uid)
@@ -18,7 +17,6 @@ class FirebaseProfileRepo implements ProfileRepo {
         final userData = userDoc.data();
 
         if (userData != null) {
-          // fetch followers & following
           final followers = List<String>.from(userData['followers'] ?? []);
           final following = List<String>.from(userData['following'] ?? []);
 
@@ -43,7 +41,6 @@ class FirebaseProfileRepo implements ProfileRepo {
   @override
   Future<void> updateProfile(ProfileUser updatedProfile) async {
     try {
-      // convert updated profile to json to store in firestore
       await firebaseFirestore
           .collection('users')
           .doc(updatedProfile.uid)
@@ -78,9 +75,7 @@ class FirebaseProfileRepo implements ProfileRepo {
             currentUserData['following'] ?? [],
           );
 
-          // check if the current user is already following the target user
           if (currentFollowing.contains(targetUid)) {
-            // unfollow
             await firebaseFirestore.collection('users').doc(currentUid).update({
               'following': FieldValue.arrayRemove([targetUid]),
             });
@@ -89,7 +84,6 @@ class FirebaseProfileRepo implements ProfileRepo {
               'following': FieldValue.arrayRemove([currentUid]),
             });
           } else {
-            // follow
             await firebaseFirestore.collection('users').doc(currentUid).update({
               'following': FieldValue.arrayUnion([targetUid]),
             });
@@ -101,5 +95,10 @@ class FirebaseProfileRepo implements ProfileRepo {
         }
       }
     } catch (e) {}
+  }
+
+  @override
+  Future<Map<String, dynamic>?> predictAddiction(String userId) async {
+    return null;
   }
 }

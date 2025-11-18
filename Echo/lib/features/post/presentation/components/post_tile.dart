@@ -43,8 +43,7 @@ class _PostTileState extends State<PostTile>
   bool isLoadingImages = false;
   bool _hasLoadedImages = false;
 
-  final double _imageHeight = 430; // 🔒 altura fixa das imagens
-
+  final double _imageHeight = 430;
   @override
   bool get wantKeepAlive => true;
 
@@ -75,7 +74,6 @@ class _PostTileState extends State<PostTile>
       final images = await postCubit.fetchPostImages(widget.post.id);
       if (!mounted) return;
 
-      // pré-carregar as imagens para evitar layout shift
       for (final img in images) {
         final imageId = img.path.split('/').last;
         final imageWidget = PostImage(
@@ -87,9 +85,7 @@ class _PostTileState extends State<PostTile>
         );
         // precache
         await precacheImage(
-          CachedNetworkImageProvider(
-            "${widget.post.id}/images/$imageId",
-          ), // substitua se necessário
+          CachedNetworkImageProvider("${widget.post.id}/images/$imageId"),
           context,
         ).catchError((_) {});
       }

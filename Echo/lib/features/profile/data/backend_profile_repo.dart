@@ -24,7 +24,6 @@ class BackendProfileRepo implements ProfileRepo {
     }
   }
 
-  /// Atualizar perfil do usuário
   @override
   Future<void> updateProfile(ProfileUser profile) async {
     if (_token == null) return;
@@ -36,13 +35,11 @@ class BackendProfileRepo implements ProfileRepo {
     }
   }
 
-  /// Alternar seguir/seguir (follow/unfollow)
   @override
   Future<void> toggleFollow(String currentUid, String targetUid) async {
     if (_token == null) return;
 
     try {
-      // Tenta seguir; se falhar, tenta deixar de seguir.
       await apiService.post('profile/$targetUid/follow', {}, token: _token);
     } catch (e) {
       try {
@@ -53,7 +50,6 @@ class BackendProfileRepo implements ProfileRepo {
     }
   }
 
-  /// Upload da imagem de perfil
   Future<void> uploadProfilePicture(String userId, Uint8List fileBytes) async {
     if (_token == null) return;
 
@@ -68,6 +64,19 @@ class BackendProfileRepo implements ProfileRepo {
     final response = await request.send();
     if (response.statusCode != 200) {
       throw Exception('Falha ao enviar imagem de perfil');
+    }
+  }
+
+  @override
+  Future<Map<String, dynamic>?> predictAddiction(String userId) async {
+    try {
+      final data = await apiService.get('ai/predict/$userId', token: _token);
+      if (data is Map<String, dynamic>) {
+        return data;
+      }
+      return null;
+    } catch (e) {
+      rethrow;
     }
   }
 }

@@ -3,6 +3,7 @@ package com.social.media.repository;
 import com.social.media.domain.like.Like;
 import jakarta.transaction.Transactional;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.Optional;
@@ -14,4 +15,13 @@ public interface LikeRepository extends JpaRepository<Like, Long> {
 
     @Transactional
     int deleteByUserIdAndPostId(@Param("userId") Long userId, @Param("postId") Long postId);
+
+    @Query(value =
+            "select count(*)\n" +
+            "from likes \n" +
+            "where user_id = :id\n" +
+            "and created_at = NOW()",
+    nativeQuery = true)
+    int getLikeCountCurrentDate(@Param("id") Long id);
+
 }

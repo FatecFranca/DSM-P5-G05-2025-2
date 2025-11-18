@@ -106,4 +106,14 @@ class ProfileCubit extends Cubit<ProfileState> {
       emit(ProfileError("Error toggling follow: $e"));
     }
   }
+
+  /// Delega para o repositório a execução da predição de vício.
+  Future<Map<String, dynamic>?> predictAddiction(String userId) async {
+    try {
+      return await profileRepo.predictAddiction(userId);
+    } catch (e) {
+      // não emite estado específico aqui; repassa erro para quem chamou
+      rethrow;
+    }
+  }
 }
