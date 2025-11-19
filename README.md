@@ -14,7 +14,7 @@ Este projeto consiste no desenvolvimento de uma **aplicação móvel de rede soc
 
 ### 🚀 Principais Funcionalidades
 
-* **Rede Híbrida:** Perfis com informações acadêmicas/profissionais e feed de interações sociais.
+* **Rede Social híbrida:** Perfis com informações acadêmicas/profissionais e feed de interações sociais.
 * **CRUD Completo:** Criação, leitura, atualização e remoção de postagens e interações.
 * **Networking:** Filtros por categorias profissionais para facilitar conexões.
 * **Smart Health Alerts:** Sistema baseado em IA que analisa o tempo de tela e notifica o usuário sobre possíveis padrões de vício.
@@ -50,8 +50,8 @@ Certifique-se de ter instalado em sua máquina:
 ### 1. Clonar o Repositório
 
 ```bash
-git clone [INSIRA_A_URL_DO_SEU_REPOSITORIO_AQUI]
-cd [NOME_DA_PASTA_DO_PROJETO]
+git clone [https://github.com/FatecFranca/DSM-P5-G05-2025-2.git]
+cd .\DSM-P5-G05-2025-2\echo
 ```
 
 ### 2. Configuração do Banco de Dados
